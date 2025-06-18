@@ -1,0 +1,14 @@
+{
+    "name": "jdodds.stats-and-modifiers.runtime",
+    "rootNamespace": "JDodds.Stats",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

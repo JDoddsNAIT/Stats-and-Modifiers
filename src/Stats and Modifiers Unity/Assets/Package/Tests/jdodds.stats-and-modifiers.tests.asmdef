@@ -1,0 +1,19 @@
+{
+    "name": "jdodds.stats-and-modifiers.tests",
+    "rootNamespace": "JDodds.Stats.Tests",
+    "references": [
+        "GUID:86c060a05f28cfa4cb7d0e1640d5dadb",
+        "GUID:a399c423c83428744b3604fc26bc4e04"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
