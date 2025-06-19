@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace JDodds.Stats
 {
@@ -82,14 +83,12 @@ namespace JDodds.Stats
 
 		public void SetBaseValue(in T value) => BaseValue = value;
 
+		#region Add Modifier
 		public void AddModifier(in IStatModifier<T> modifier)
 		{
-			if (!_modifiers.Contains(modifier))
+			if (this.AddModifierNoSort(modifier))
 			{
-				SetDirty();
-				_modifiers.Add(modifier);
-				_query += modifier.HandleQuery;
-				modifier.OnValueChanged += SetDirty;
+				this.SortModifiers();
 			}
 		}
 
@@ -99,9 +98,15 @@ namespace JDodds.Stats
 		/// <param name="modifiers"></param>
 		public void AddModifier(params IStatModifier<T>[] modifiers)
 		{
+			bool requireSort = false;
 			for (int i = 0; i < modifiers.Length; i++)
 			{
-				this.AddModifier(modifiers[i]);
+				requireSort |= AddModifierNoSort(modifiers[i]);
+			}
+
+			if (requireSort)
+			{
+				this.SortModifiers();
 			}
 		}
 
@@ -111,20 +116,37 @@ namespace JDodds.Stats
 		/// <param name="modifiers"></param>
 		public void AddModifier(IEnumerable<IStatModifier<T>> modifiers)
 		{
+			bool requireSort = false;
 			foreach (var modifier in modifiers)
 			{
-				this.AddModifier(modifier);
+				requireSort |= AddModifierNoSort(modifier);
+			}
+
+			if (requireSort)
+			{
+				this.SortModifiers();
 			}
 		}
 
+		private bool AddModifierNoSort(in IStatModifier<T> modifier)
+		{
+			bool canAdd = !_modifiers.Contains(modifier);
+			if (canAdd)
+			{
+				_modifiers.Add(modifier);
+				_query += modifier.HandleQuery;
+				modifier.OnValueChanged += SetDirty;
+			}
+			return canAdd;
+		}
+		#endregion
+
+		#region Remove Modifier
 		public void RemoveModifier(in IStatModifier<T> modifier)
 		{
-			if (_modifiers.Contains(modifier))
+			if (this.RemoveModifierNoSort(modifier))
 			{
-				SetDirty();
-				_modifiers.Remove(modifier);
-				_query -= modifier.HandleQuery;
-				modifier.OnValueChanged -= SetDirty;
+				this.SortModifiers();
 			}
 		}
 
@@ -134,9 +156,15 @@ namespace JDodds.Stats
 		/// <param name="modifiers"></param>
 		public void RemoveModifier(params IStatModifier<T>[] modifiers)
 		{
+			bool requireSort = false;
 			for (int i = 0; i < modifiers.Length; i++)
 			{
-				this.RemoveModifier(modifiers[i]);
+				requireSort |= RemoveModifierNoSort(modifiers[i]);
+			}
+
+			if (requireSort)
+			{
+				this.SortModifiers();
 			}
 		}
 
@@ -146,11 +174,30 @@ namespace JDodds.Stats
 		/// <param name="modifiers"></param>
 		public void RemoveModifier(IEnumerable<IStatModifier<T>> modifiers)
 		{
+			bool requireSort = false;
 			foreach (var modifier in modifiers)
 			{
-				this.RemoveModifier(modifier);
+				requireSort |= RemoveModifierNoSort(modifier);
+			}
+
+			if (requireSort)
+			{
+				this.SortModifiers();
 			}
 		}
+
+		private bool RemoveModifierNoSort(in IStatModifier<T> modifier)
+		{
+			bool canRemove = _modifiers.Contains(modifier);
+			if (canRemove)
+			{
+				_modifiers.Remove(modifier);
+				_query -= modifier.HandleQuery;
+				modifier.OnValueChanged -= SetDirty;
+			}
+			return canRemove;
+		}
+		#endregion
 
 		/// <summary>
 		/// Removes all modifiers from this <see cref="StatValue{T}"/>.
@@ -158,6 +205,19 @@ namespace JDodds.Stats
 		public void ClearModifiers()
 		{
 			RemoveModifier(_modifiers);
+		}
+
+		private void SortModifiers()
+		{
+			for (int i = _modifiers.Count - 1; i >= 0; i--)
+			{
+				if (_modifiers[i] is null)
+				{
+					_modifiers.RemoveAt(i);
+				}
+			}
+			_modifiers.Sort();
+			this.SetDirty();
 		}
 
 		public static implicit operator T(StatValue<T> stat) => stat.Value;
