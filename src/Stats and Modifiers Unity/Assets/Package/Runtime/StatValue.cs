@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace JDodds.Stats
 {
@@ -16,7 +15,8 @@ namespace JDodds.Stats
 		protected bool _dirty;
 		protected T _cachedValue;
 
-		// This field is not serialized so sub-classes can override the property to add formatting attributes to a field with the same name.
+		// This field is not serialized so sub-classes can override the property to add formatting attributes
+		// such as [Range] or [Min] to a field with the same name.
 		[NonSerialized] private T _baseValue;
 
 		protected List<IStatModifier<T>> _modifiers;
@@ -27,23 +27,47 @@ namespace JDodds.Stats
 		public virtual T BaseValue { get => _baseValue; set { _baseValue = value; this.SetDirty(); } }
 		public IReadOnlyList<IStatModifier<T>> Modifiers => _modifiers;
 
-		public StatValue() : this(baseValue: default(T)) { }
+		#region Constructors
+		/// <summary>
+		/// Creates a new Stat Value of type <typeparamref name="T"/> with the default base value.
+		/// </summary>
+		public StatValue() : this(baseValue: default) { }
 
+		/// <summary>
+		/// Creates a new Stat Value of type <typeparamref name="T"/> with the given <paramref name="baseValue"/>.
+		/// </summary>
+		/// <param name="baseValue"></param>
 		public StatValue(T baseValue)
 		{
 			this.BaseValue = baseValue;
 			_modifiers = new();
 		}
 
+		/// <summary>
+		/// Creates a new Stat Value of type <typeparamref name="T"/> with the given <paramref name="baseValue"/> and <paramref name="modifiers"/>.
+		/// </summary>
+		/// <param name="baseValue"></param>
+		/// <param name="modifiers"></param>
 		public StatValue(T baseValue, params IStatModifier<T>[] modifiers) : this(baseValue)
 		{
 			AddModifier(modifiers);
 		}
 
+		/// <summary>
+		/// Creates a new Stat Value of type <typeparamref name="T"/> with the given <paramref name="baseValue"/> and <paramref name="modifiers"/>.
+		/// </summary>
+		/// <param name="baseValue"></param>
+		/// <param name="modifiers"></param>
 		public StatValue(T baseValue, IEnumerable<IStatModifier<T>> modifiers) : this(baseValue)
 		{
 			AddModifier(modifiers);
 		}
+
+		~StatValue()
+		{
+			this.ClearModifiers();
+		}
+		#endregion
 
 		public void SetDirty() => _dirty |= true;
 
@@ -69,6 +93,10 @@ namespace JDodds.Stats
 			}
 		}
 
+		/// <summary>
+		/// Adds the given <paramref name="modifiers"/> to this <see cref="StatValue{T}"/>.
+		/// </summary>
+		/// <param name="modifiers"></param>
 		public void AddModifier(params IStatModifier<T>[] modifiers)
 		{
 			for (int i = 0; i < modifiers.Length; i++)
@@ -77,6 +105,10 @@ namespace JDodds.Stats
 			}
 		}
 
+		/// <summary>
+		/// <inheritdoc cref="AddModifier(IStatModifier{T}[])"/>
+		/// </summary>
+		/// <param name="modifiers"></param>
 		public void AddModifier(IEnumerable<IStatModifier<T>> modifiers)
 		{
 			foreach (var modifier in modifiers)
@@ -96,6 +128,10 @@ namespace JDodds.Stats
 			}
 		}
 
+		/// <summary>
+		/// Removes the given <paramref name="modifiers"/> from this <see cref="StatValue{T}"/>.
+		/// </summary>
+		/// <param name="modifiers"></param>
 		public void RemoveModifier(params IStatModifier<T>[] modifiers)
 		{
 			for (int i = 0; i < modifiers.Length; i++)
@@ -104,6 +140,10 @@ namespace JDodds.Stats
 			}
 		}
 
+		/// <summary>
+		/// <inheritdoc cref="RemoveModifier(IStatModifier{T}[])"/>
+		/// </summary>
+		/// <param name="modifiers"></param>
 		public void RemoveModifier(IEnumerable<IStatModifier<T>> modifiers)
 		{
 			foreach (var modifier in modifiers)
@@ -112,9 +152,16 @@ namespace JDodds.Stats
 			}
 		}
 
+		/// <summary>
+		/// Removes all modifiers from this <see cref="StatValue{T}"/>.
+		/// </summary>
 		public void ClearModifiers()
 		{
 			RemoveModifier(_modifiers);
 		}
+
+		public static implicit operator T(StatValue<T> stat) => stat.Value;
+
+		public static explicit operator StatValue<T>(T value) => new(value);
 	}
 }

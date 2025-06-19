@@ -2,6 +2,10 @@ using UnityEngine;
 
 namespace JDodds.Stats
 {
+	/// <summary>
+	/// Used for interfacing with types that can modify <typeparamref name="T"/> stats.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	public interface IStatModifier<T> where T : struct
 	{
 		/// <summary>
