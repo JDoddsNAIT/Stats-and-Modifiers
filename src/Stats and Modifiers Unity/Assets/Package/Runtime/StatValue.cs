@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace JDodds.Stats
 {
@@ -21,8 +20,6 @@ namespace JDodds.Stats
 		[NonSerialized] private T _baseValue;
 
 		protected List<IStatModifier<T>> _modifiers;
-
-		protected QueryHandler<T> _query;
 
 		public T Value => _dirty ? GetModifiedValue() : _cachedValue;
 		public virtual T BaseValue { get => _baseValue; set { _baseValue = value; this.SetDirty(); } }
@@ -75,7 +72,18 @@ namespace JDodds.Stats
 		public T GetModifiedValue()
 		{
 			var query = new StatQuery<T>(BaseValue);
-			_query?.Invoke(ref query);
+			QueryHandler<T> handler = delegate { };
+
+			for (int i = 0; i < _modifiers.Count; i++)
+			{
+				if (_modifiers[i] is not null)
+				{
+					handler += _modifiers[i].HandleQuery;
+				}
+			}
+
+			handler(ref query);
+			
 			_cachedValue = query.Value;
 			_dirty = false;
 			return _cachedValue;
@@ -134,7 +142,6 @@ namespace JDodds.Stats
 			if (canAdd)
 			{
 				_modifiers.Add(modifier);
-				_query += modifier.HandleQuery;
 				modifier.OnValueChanged += SetDirty;
 			}
 			return canAdd;
@@ -192,7 +199,6 @@ namespace JDodds.Stats
 			if (canRemove)
 			{
 				_modifiers.Remove(modifier);
-				_query -= modifier.HandleQuery;
 				modifier.OnValueChanged -= SetDirty;
 			}
 			return canRemove;
@@ -216,7 +222,9 @@ namespace JDodds.Stats
 					_modifiers.RemoveAt(i);
 				}
 			}
+
 			_modifiers.Sort();
+
 			this.SetDirty();
 		}
 

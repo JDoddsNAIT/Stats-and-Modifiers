@@ -6,8 +6,16 @@ namespace JDodds.Stats
 	/// Used for interfacing with types that can modify <typeparamref name="T"/> stats.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public interface IStatModifier<T> : IComparable<IStatModifier<T>> where T : struct
+	public interface IStatModifier<T> :
+		IEquatable<IStatModifier<T>>,
+		IComparable<IStatModifier<T>>
+		where T : struct
 	{
+		/// <summary>
+		/// Globally unique identifier for this modifier.
+		/// </summary>
+		Guid Id { get; }
+
 		/// <summary>
 		/// Modifiers with a lower order will be applied first.
 		/// </summary>
@@ -19,6 +27,11 @@ namespace JDodds.Stats
 				null => 1,
 				_ => this.Order.CompareTo(other.Order),
 			};
+		}
+
+		bool IEquatable<IStatModifier<T>>.Equals(IStatModifier<T> other)
+		{
+			return other is IStatModifier<T> modifier && this.Id.Equals(modifier.Id);
 		}
 
 		/// <summary>

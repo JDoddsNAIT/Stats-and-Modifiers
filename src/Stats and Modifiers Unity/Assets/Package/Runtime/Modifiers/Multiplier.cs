@@ -7,7 +7,20 @@ namespace JDodds.Stats.Modifiers
 	[Serializable]
 	public class Multiplier : INumericModifier
 	{
-		public int Order { get; }
+		public Guid Id { get; }
+
+		private int _order;
+
+		public int Order {
+			get => _order;
+			set {
+				if (_order != value)
+				{
+					_order = value;
+					BroadcastChange();
+				}
+			}
+		}
 
 		private bool _enabled;
 
@@ -39,6 +52,18 @@ namespace JDodds.Stats.Modifiers
 
 		public event Action OnValueChanged;
 
+		public Multiplier()
+		{
+			Id = Guid.NewGuid();
+		}
+
+		public Multiplier(float amount, bool enabled = true, int order = 0) : this()
+		{
+			_amount = amount;
+			_enabled = enabled;
+			_order = order;
+		}
+
 		/// <summary>
 		/// Alerts any stats with this modifier that the value must be recalculated.
 		/// </summary>
@@ -52,12 +77,18 @@ namespace JDodds.Stats.Modifiers
 
 		public void HandleQuery(ref StatQuery<int> query)
 		{
-			throw new NotImplementedException();
+			if (Enabled)
+			{
+				query.Value = (int)(query.Value * Amount);
+			}
 		}
 
 		public void HandleQuery(ref StatQuery<float> query)
 		{
-			throw new NotImplementedException();
+			if (Enabled)
+			{
+				query.Value *= Amount;
+			}
 		}
 	}
 }
